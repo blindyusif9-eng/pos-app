@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="فرۆشگاکەم">
+<title>فرۆشگاکەم</title>
+<style>
+/* فۆنتی سیستەم - پێویستی بە ئینتەرنێت نییە */
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+:root {
+  --bg: #0f0f14; --sur: #18181f; --card: #1e1e28; --bdr: #2a2a38;
+  --acc: #ff9f1c; --acc2: #e05c00; --soft: rgba(255,159,28,.13);
+  --grn: #2ecc71; --red: #e74c3c; --blu: #4fa3e0;
+  --txt: #f0f0f5; --mut: #7a7a95; --r: 14px;
+  --nav: 70px; --sb: env(safe-area-inset-bottom,16px); --st: env(safe-area-inset-top,0px);
+}
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--txt); direction: rtl; }
+body { display: flex; flex-direction: column; }
+
+/* ── STATUS BAR ── */
+.sbar {
+  background: var(--sur); padding: 10px 20px 6px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; padding-top: calc(10px + var(--st));
+}
+.sbar-t { font-size: 15px; font-weight: 700; }
+.sbar-i { font-size: 14px; display: flex; gap: 5px; }
+
+/* ── HEADER ── */
+.hdr {
+  background: var(--sur); border-bottom: 1px solid var(--bdr);
+  padding: 10px 15px; display: flex; align-items: center;
+  justify-content: space-between; flex-shrink: 0;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-ic {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--acc), var(--acc2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; box-shadow: 0 4px 12px rgba(255,159,28,.3);
+}
+.logo-nm { font-size: 17px; font-weight: 800; }
+.logo-nm span { color: var(--acc); }
+.s3pill {
+  background: var(--soft); border: 1px solid rgba(255,159,28,.25);
+  color: var(--acc); font-size: 10px; padding: 5px 10px;
+  border-radius: 20px; display: flex; align-items: center; gap: 5px; direction: ltr;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--grn); animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── INSTALL GUIDE ── */
+#guide {
+  position: fixed; inset: 0; background: rgba(0,0,0,.9);
+  z-index: 999; display: flex; align-items: flex-end;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+#guide.show { opacity: 1; pointer-events: all; }
+.gsheet {
+  background: var(--card); border-radius: 22px 22px 0 0;
+  width: 100%; padding: 22px 18px calc(22px + var(--sb));
+  border-top: 2px solid var(--acc);
+  transform: translateY(100%); transition: transform .38s cubic-bezier(.34,1.1,.64,1);
+}
+#guide.show .gsheet { transform: translateY(0); }
+.ghandle { width: 40px; height: 4px; background: var(--bdr); border-radius: 2px; margin: 0 auto 18px; }
+.gapp { text-align: center; margin-bottom: 18px; }
+.gicon {
+  width: 72px; height: 72px; border-radius: 18px; margin: 0 auto 10px;
+  background: linear-gradient(135deg, var(--acc), var(--acc2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 38px; box-shadow: 0 8px 24px rgba(255,159,28,.4);
+}
+.gttl { font-size: 19px; font-weight: 800; margin-bottom: 4px; }
+.gsub { font-size: 13px; color: var(--mut); }
+.gstep {
+  background: var(--sur); border-radius: 12px;
+  padding: 13px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 13px;
+}
+.gnum {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--acc); color: #000;
+  font-weight: 800; font-size: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.gtxt { font-size: 13px; line-height: 1.6; }
+.gtxt b { color: var(--acc); }
+.garrow { text-align: center; font-size: 26px; color: var(--acc); animation: dn .9s infinite; }
+@keyframes dn { 0%,100%{transform:translateY(0)} 50%{transform:translateY(5px)} }
+.gclose {
+  width: 100%; margin-top: 14px; padding: 14px;
+  background: var(--acc); border: none; border-radius: var(--r);
+  color: #000; font-size: 15px; font-weight: 800; cursor: pointer;
+  font-family: -apple-system, sans-serif;
+}
+
+/* ── SCREENS ── */
+.scr { display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+.scr.on { display: flex; }
+.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.scroll::-webkit-scrollbar { display: none; }
+
+/* ── PRODUCTS SCREEN ── */
+.srchwrap { padding: 10px 13px 4px; background: var(--sur); flex-shrink: 0; }
+.srchbox {
+  background: var(--card); border: 1.5px solid var(--bdr);
+  border-radius: 12px; display: flex; align-items: center;
+  padding: 10px 12px; gap: 8px;
+}
+.srchbox input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--txt); font-size: 14px; text-align: right;
+  font-family: -apple-system, sans-serif;
+}
+.srchbox input::placeholder { color: var(--mut); }
+.cats {
+  display: flex; flex-direction: row-reverse; gap: 8px;
+  padding: 8px 13px; overflow-x: auto; flex-shrink: 0;
+  background: var(--sur); scrollbar-width: none;
+}
+.cats::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0; padding: 7px 16px; border-radius: 20px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  border: 1.5px solid var(--bdr); color: var(--mut);
+  background: var(--card); white-space: nowrap; transition: all .2s;
+}
+.chip.on { background: var(--acc); color: #000; border-color: var(--acc); }
+.pgrid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 11px;
+  padding: 12px 13px;
+  padding-bottom: calc(var(--nav) + var(--sb) + 88px);
+}
+.pcard {
+  background: var(--card); border: 1.5px solid var(--bdr);
+  border-radius: var(--r); padding: 14px 11px 42px;
+  cursor: pointer; position: relative; text-align: right;
+  transition: border-color .2s; -webkit-touch-callout: none;
+}
+.pcard:active { background: #252530; transform: scale(.97); }
+.pcard.ic { border-color: var(--acc); }
+.ps3 {
+  position: absolute; top: 8px; left: 8px;
+  background: rgba(79,163,224,.1); color: var(--blu);
+  font-size: 8px; padding: 2px 5px; border-radius: 4px;
+  border: 1px solid rgba(79,163,224,.2); font-family: monospace;
+}
+.pqb {
+  position: absolute; top: 6px; right: 6px;
+  background: var(--acc); color: #000; font-size: 11px; font-weight: 800;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: none; align-items: center; justify-content: center;
+}
+.pcard.ic .pqb { display: flex; }
+.pem { font-size: 34px; display: block; margin-bottom: 7px; }
+.pnm { font-size: 12px; font-weight: 700; margin-bottom: 3px; line-height: 1.3; }
+.ppr { font-size: 13px; font-weight: 800; color: var(--acc); }
+.pst { font-size: 10px; color: var(--mut); margin-top: 2px; }
+.padd {
+  position: absolute; bottom: 9px; left: 9px;
+  width: 30px; height: 30px; border-radius: 9px;
+  background: var(--acc); border: none; color: #000;
+  font-size: 20px; font-weight: 900; display: flex;
+  align-items: center; justify-content: center; cursor: pointer;
+}
+.padd:active { transform: scale(.82); }
+
+/* ── FLOAT BTN ── */
+#fcart {
+  position: fixed; bottom: calc(var(--nav) + var(--sb) + 14px);
+  left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--acc), var(--acc2));
+  color: #000; font-size: 14px; font-weight: 800;
+  padding: 13px 26px; border-radius: 40px; border: none;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 6px 24px rgba(255,159,28,.45);
+  cursor: pointer; z-index: 50;
+  opacity: 0; pointer-events: none; transition: all .25s; white-space: nowrap;
+  font-family: -apple-system, sans-serif;
+}
+#fcart.on { opacity: 1; pointer-events: all; }
+#fcart:active { transform: translateX(-50%) scale(.96); }
+.fcn {
+  background: rgba(0,0,0,.3); color: #000;
+  font-size: 12px; font-weight: 900;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── CART SCREEN ── */
+.cin { padding: 13px 13px calc(var(--nav) + var(--sb) + 24px); }
+.ctop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 13px; }
+.cttl { font-size: 17px; font-weight: 800; }
+.clr {
+  font-size: 12px; color: var(--red); background: none; border: none;
+  cursor: pointer; padding: 6px 12px; border-radius: 8px;
+  border: 1px solid rgba(231,76,60,.3); font-family: -apple-system, sans-serif;
+}
+.noitm { display: flex; flex-direction: column; align-items: center; padding-top: 80px; gap: 12px; color: var(--mut); }
+.noitm .bi { font-size: 64px; opacity: .2; }
+.citem {
+  background: var(--card); border: 1.5px solid var(--bdr);
+  border-radius: var(--r); padding: 13px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 11px;
+  animation: up .2s ease;
+}
+@keyframes up { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.cie { font-size: 30px; flex-shrink: 0; }
+.cii { flex: 1; }
+.cin2 { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+.ciu { font-size: 11px; color: var(--mut); }
+.cit { font-size: 14px; font-weight: 800; color: var(--acc); margin-top: 4px; }
+.cir { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.cic { display: flex; align-items: center; gap: 7px; }
+.qb {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--bdr); border: none; color: var(--txt);
+  font-size: 17px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.qb:active { background: var(--acc); color: #000; }
+.qn { font-size: 15px; font-weight: 800; min-width: 22px; text-align: center; }
+.db { background: none; border: none; color: var(--mut); font-size: 17px; cursor: pointer; }
+.db:active { color: var(--red); }
+.totbox {
+  background: var(--card); border: 1.5px solid var(--bdr);
+  border-radius: var(--r); padding: 15px; margin-bottom: 13px;
+}
+.tr { display: flex; justify-content: space-between; margin-bottom: 9px; font-size: 14px; }
+.tr .tl { color: var(--mut); }
+.tr .tv { font-weight: 700; }
+.tdiv { border: none; border-top: 1px solid var(--bdr); margin: 8px 0; }
+.tr.gr .tl { font-size: 15px; font-weight: 800; }
+.tr.gr .tv { font-size: 17px; font-weight: 800; color: var(--acc); }
+.plbl { font-size: 13px; color: var(--mut); margin-bottom: 9px; }
+.prow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 13px; }
+.pm {
+  background: var(--card); border: 1.5px solid var(--bdr);
+  border-radius: var(--r); padding: 13px; text-align: center;
+  cursor: pointer; transition: all .2s; color: var(--mut);
+  font-size: 13px; font-weight: 700;
+}
+.pm .pi { font-size: 26px; display: block; margin-bottom: 5px; }
+.pm.sel { border-color: var(--acc); color: var(--acc); background: var(--soft); }
+.pm:active { transform: scale(.96); }
+.paybtn {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--acc), var(--acc2));
+  border: none; border-radius: var(--r); color: #000;
+  font-size: 16px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,159,28,.3); margin-bottom: 8px;
+  font-family: -apple-system, sans-serif;
+}
+.paybtn:active { transform: scale(.98); }
+
+/* ── HISTORY ── */
+.hin { padding: 13px 13px calc(var(--nav) + var(--sb) + 24px); }
+.httl { font-size: 17px; font-weight: 800; margin-bottom: 14px; }
+.nhist { text-align: center; padding-top: 70px; color: var(--mut); }
+.hcard {
+  background: var(--card); border: 1.5px solid var(--bdr);
+  border-radius: var(--r); padding: 13px; margin-bottom: 10px;
+  animation: up .25s ease;
+}
+.htop { display: flex; justify-content: space-between; margin-bottom: 7px; }
+.hid { font-size: 12px; font-weight: 700; color: var(--blu); }
+.htot { font-size: 15px; font-weight: 800; color: var(--acc); }
+.htm { font-size: 11px; color: var(--mut); direction: ltr; margin-top: 2px; }
+.hits { font-size: 12px; color: var(--mut); margin-bottom: 8px; line-height: 1.5; }
+.hs3 {
+  background: rgba(79,163,224,.07); border: 1px solid rgba(79,163,224,.18);
+  border-radius: 6px; padding: 5px 9px; font-size: 9px; color: var(--blu);
+  direction: ltr; font-family: monospace; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── BOTTOM NAV ── */
+.botnav {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  background: var(--sur); border-top: 1px solid var(--bdr);
+  flex-shrink: 0; padding-bottom: var(--sb);
+}
+.nb {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; padding: 10px 4px;
+  cursor: pointer; color: var(--mut); font-size: 11px; font-weight: 700;
+  position: relative; transition: color .2s;
+}
+.nb .ni { font-size: 22px; transition: transform .2s; }
+.nb.on { color: var(--acc); }
+.nb.on .ni { transform: scale(1.15); }
+.nb:active { background: rgba(255,255,255,.04); }
+.nbadge {
+  position: absolute; top: 5px; right: calc(50% - 20px);
+  background: var(--red); color: #fff; font-size: 9px; font-weight: 800;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; padding: 0 4px;
+}
+
+/* ── MODAL ── */
+.ov {
+  position: fixed; inset: 0; background: rgba(0,0,0,.85);
+  display: flex; align-items: flex-end; z-index: 400;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.ov.on { opacity: 1; pointer-events: all; }
+.bsh {
+  background: var(--card); border-radius: 22px 22px 0 0;
+  padding: 20px 17px calc(20px + var(--sb)); width: 100%; text-align: center;
+  transform: translateY(100%); transition: transform .38s cubic-bezier(.34,1.1,.64,1);
+}
+.ov.on .bsh { transform: translateY(0); }
+.shh { width: 40px; height: 4px; background: var(--bdr); border-radius: 2px; margin: 0 auto 18px; }
+.shic { font-size: 52px; margin-bottom: 10px; }
+.shttl { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+.shsub { font-size: 13px; color: var(--mut); line-height: 1.7; margin-bottom: 16px; }
+.rcpt {
+  background: var(--sur); border: 1px solid var(--bdr);
+  border-radius: 12px; padding: 12px; margin-bottom: 16px; text-align: right;
+}
+.rr {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0; border-bottom: 1px solid var(--bdr); font-size: 13px;
+}
+.rr:last-child { border: none; }
+.rr .rl { color: var(--mut); }
+.rr .rv { font-weight: 700; font-size: 12px; }
+.newbtn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, var(--acc), var(--acc2));
+  border: none; border-radius: var(--r); color: #000;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+  font-family: -apple-system, sans-serif;
+}
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; top: calc(var(--st) + 70px); left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: var(--card); border: 1px solid rgba(79,163,224,.3);
+  border-radius: 10px; padding: 9px 15px;
+  font-size: 11px; color: var(--blu); font-family: monospace;
+  z-index: 300; opacity: 0; transition: all .3s;
+  white-space: nowrap; direction: ltr;
+  box-shadow: 0 4px 18px rgba(0,0,0,.4);
+  max-width: 88%; overflow: hidden; text-overflow: ellipsis;
+}
+#toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- iOS INSTALL GUIDE -->
+<div id="guide">
+  <div class="gsheet">
+    <div class="ghandle"></div>
+    <div class="gapp">
+      <div class="gicon">🏪</div>
+      <div class="gttl">نصبی فرۆشگاکەم</div>
+      <div class="gsub">تەنها ٣ هەنگاو — ئایفۆن و ئایپاد</div>
+    </div>
+    <div class="gstep"><div class="gnum">١</div><div class="gtxt">دوگمەی <b>Share ↑</b> لە خوارەوەی Safari بپەرچینە</div></div>
+    <div class="garrow">↓</div>
+    <div class="gstep"><div class="gnum">٢</div><div class="gtxt">بچنە خوارەوە و <b>"Add to Home Screen"</b> هەڵبژێرە</div></div>
+    <div class="garrow">↓</div>
+    <div class="gstep"><div class="gnum">٣</div><div class="gtxt">ناوی <b>فرۆشگاکەم</b> بنووسە و <b>Add</b> بپەرچینە ✅</div></div>
+    <button class="gclose" onclick="document.getElementById('guide').classList.remove('show')">باشە، فامکردم ✓</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="sbar">
+  <span class="sbar-t" id="clk">٩:٤١</span>
+  <div class="sbar-i"><span>📶</span><span>🔋</span></div>
+</div>
+
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-ic">🏪</div>
+    <div class="logo-nm">فرۆش<span>گاکەم</span></div>
+  </div>
+  <div class="s3pill"><div class="dot"></div>S3 پەیوەندی</div>
+</div>
+
+<!-- PRODUCTS -->
+<div class="scr on" id="sc-p">
+  <div class="srchwrap">
+    <div class="srchbox">
+      <input id="srch" placeholder="گەڕان بە دوای کاڵا..." oninput="doSearch()">
+      <span style="color:var(--mut)">🔍</span>
+    </div>
+  </div>
+  <div class="cats" id="catsEl"></div>
+  <div class="scroll"><div class="pgrid" id="pgrid"></div></div>
+</div>
+
+<!-- CART -->
+<div class="scr" id="sc-c">
+  <div class="scroll"><div class="cin" id="cartEl"></div></div>
+</div>
+
+<!-- HISTORY -->
+<div class="scr" id="sc-h">
+  <div class="scroll"><div class="hin" id="histEl"></div></div>
+</div>
+
+<!-- BOT NAV -->
+<div class="botnav">
+  <div class="nb on" id="nb-p" onclick="go('p')"><div class="ni">🛍️</div><span>کاڵاکان</span></div>
+  <div class="nb" id="nb-c" onclick="go('c')">
+    <div class="ni">🛒</div><span>سەبەتە</span>
+    <div class="nbadge" id="badge" style="display:none">0</div>
+  </div>
+  <div class="nb" id="nb-h" onclick="go('h')"><div class="ni">📋</div><span>مێژوو</span></div>
+</div>
+
+<!-- FLOAT BTN -->
+<button id="fcart" onclick="go('c')">
+  <div class="fcn" id="fcn">0</div>بینینی سەبەتە ←
+</button>
+
+<!-- MODAL -->
+<div class="ov" id="modal">
+  <div class="bsh">
+    <div class="shh"></div>
+    <div class="shic">🎉</div>
+    <div class="shttl">فرۆشتن سەرکەوتوو بوو!</div>
+    <div class="shsub">وەسڵ ناردرا بۆ <b>Amazon S3</b></div>
+    <div class="rcpt" id="rcptEl"></div>
+    <button class="newbtn" onclick="closeModal()">✨ فرۆشتنی نوێ</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var PRODS=[
+  {id:1,n:'لاپتۆپ',price:1299,e:'💻',c:'ئەلیکترۆنیک'},
+  {id:2,n:'مۆبایل',price:999,e:'📱',c:'ئەلیکترۆنیک'},
+  {id:3,n:'گوێبەستە',price:249,e:'🎧',c:'ئەلیکترۆنیک'},
+  {id:4,n:'تابلێت',price:599,e:'📟',c:'ئەلیکترۆنیک'},
+  {id:5,n:'سمارت واچ',price:349,e:'⌚',c:'ئەلیکترۆنیک'},
+  {id:6,n:'قاوەی تازە',price:24,e:'☕',c:'خواردنەوە'},
+  {id:7,n:'چای گەڵا',price:18,e:'🍵',c:'خواردنەوە'},
+  {id:8,n:'شووشەی ئاو',price:3,e:'💧',c:'خواردنەوە'},
+  {id:9,n:'شیرینی پرۆتین',price:8,e:'🍫',c:'خواردنەوە'},
+  {id:10,n:'پێڵاوی وەرزش',price:120,e:'👟',c:'جل و بەرگ'},
+  {id:11,n:'تۆرەسان',price:89,e:'🎒',c:'جل و بەرگ'},
+  {id:12,n:'چاوئەینک',price:65,e:'🕶️',c:'جل و بەرگ'},
+  {id:13,n:'دەفتەر',price:12,e:'📓',c:'قەرتاسیە'},
+  {id:14,n:'چەقۆی نووسین',price:9,e:'🖊️',c:'قەرتاسیە'},
+  {id:15,n:'چرای مێز',price:45,e:'🪔',c:'ئۆفیس'},
+  {id:16,n:'ماوسپەد',price:15,e:'🖱️',c:'ئۆفیس'}
+];
+var CATS=['هەموو'].concat([...new Set(PRODS.map(function(p){return p.c;}))]);
+var cart={}, selPay='cash', curCat='هەموو', sNo=1000, hist=[];
+
+// ── Clock ──
+function tick(){
+  var n=new Date();
+  document.getElementById('clk').textContent=
+    String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+}
+setInterval(tick,10000); tick();
+
+// ── iOS Install Guide ──
+var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(/mac/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+var isStandalone=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+if(isIOS&&!isStandalone){
+  setTimeout(function(){document.getElementById('guide').classList.add('show');},1500);
+}
+
+// ── Screens ──
+function go(s){
+  document.querySelectorAll('.scr').forEach(function(x){x.classList.remove('on');});
+  document.querySelectorAll('.nb').forEach(function(x){x.classList.remove('on');});
+  document.getElementById('sc-'+s).classList.add('on');
+  document.getElementById('nb-'+s).classList.add('on');
+  if(s==='c'){renderCart();document.getElementById('fcart').classList.remove('on');}
+  else fcu();
+  if(s==='h')renderHist();
+}
+
+// ── Categories ──
+function renderCats(){
+  document.getElementById('catsEl').innerHTML=CATS.map(function(c){
+    return '<div class="chip '+(c===curCat?'on':'')+'" onclick="setCat(\''+c+'\')">'+c+'</div>';
+  }).join('');
+}
+function setCat(c){curCat=c;renderCats();renderProds();}
+
+// ── Products ──
+function doSearch(){renderProds();}
+function renderProds(){
+  var q=document.getElementById('srch').value;
+  var list=PRODS.filter(function(p){return(curCat==='هەموو'||p.c===curCat)&&p.n.indexOf(q)>-1;});
+  document.getElementById('pgrid').innerHTML=list.map(function(p){
+    return '<div class="pcard '+(cart[p.id]?'ic':'')+'" onclick="addItem('+p.id+')">'+
+      '<div class="ps3">S3</div>'+
+      '<div class="pqb">'+(cart[p.id]?cart[p.id].qty:'')+'</div>'+
+      '<span class="pem">'+p.e+'</span>'+
+      '<div class="pnm">'+p.n+'</div>'+
+      '<div class="ppr">$'+p.price+'</div>'+
+      '<button class="padd" onclick="event.stopPropagation();addItem('+p.id+')">+</button>'+
+      '</div>';
+  }).join('');
+}
+
+// ── Cart Logic ──
+function addItem(id){
+  var p=PRODS.find(function(x){return x.id===id;});
+  if(!p)return;
+  cart[id]?cart[id].qty++:(cart[id]=Object.assign({},p,{qty:1}));
+  toast('PUT item_'+id+'.json \u2192 s3://pos-store/');
+  bu();fcu();renderProds();
+}
+function rm1(id){if(!cart[id])return;if(--cart[id].qty<=0)delete cart[id];bu();fcu();renderCart();renderProds();}
+function add1(id){if(cart[id]){cart[id].qty++;}bu();fcu();renderCart();}
+function del(id){delete cart[id];bu();fcu();renderCart();renderProds();}
+function clrAll(){cart={};bu();fcu();renderCart();renderProds();}
+
+function ti(){return Object.values(cart).reduce(function(s,i){return s+i.qty;},0);}
+function sub(){return Object.values(cart).reduce(function(s,i){return s+i.price*i.qty;},0);}
+
+function bu(){
+  var n=ti();
+  var b=document.getElementById('badge');
+  b.style.display=n?'flex':'none';
+  b.textContent=n;
+}
+function fcu(){
+  var n=ti();
+  var onP=document.getElementById('sc-p').classList.contains('on');
+  var fc=document.getElementById('fcart');
+  fc.classList.toggle('on',n>0&&onP);
+  document.getElementById('fcn').textContent=n;
+}
+function setP(el,m){
+  document.querySelectorAll('.pm').forEach(function(x){x.classList.remove('sel');});
+  el.classList.add('sel');selPay=m;
+}
+
+function renderCart(){
+  var items=Object.values(cart);
+  var s=sub(),t=s*.15,total=s+t;
+  if(!items.length){
+    document.getElementById('cartEl').innerHTML=
+      '<div class="ctop"><div class="cttl">🧾 سەبەتەکەم</div></div>'+
+      '<div class="noitm"><div class="bi">🛒</div>'+
+      '<div style="font-size:15px;font-weight:700">سەبەتە بەتاڵە</div>'+
+      '<div style="font-size:13px;color:var(--mut)">بگەڕێوە و کاڵا زیاد بکە</div></div>';
+    return;
+  }
+  var itemsHtml=items.map(function(i){
+    return '<div class="citem">'+
+      '<div class="cie">'+i.e+'</div>'+
+      '<div class="cii"><div class="cin2">'+i.n+'</div>'+
+      '<div class="ciu">یەک دانە: $'+i.price+'</div>'+
+      '<div class="cit">$'+(i.price*i.qty).toFixed(2)+'</div></div>'+
+      '<div class="cir"><button class="db" onclick="del('+i.id+')">✕</button>'+
+      '<div class="cic">'+
+      '<button class="qb" onclick="rm1('+i.id+')">−</button>'+
+      '<span class="qn">'+i.qty+'</span>'+
+      '<button class="qb" onclick="add1('+i.id+')">+</button>'+
+      '</div></div></div>';
+  }).join('');
+  document.getElementById('cartEl').innerHTML=
+    '<div class="ctop"><div class="cttl">🧾 سەبەتەکەم</div>'+
+    '<button class="clr" onclick="clrAll()">سڕینەوەی هەمووی</button></div>'+
+    itemsHtml+
+    '<div class="totbox">'+
+    '<div class="tr"><span class="tl">کۆی گشتی</span><span class="tv">$'+s.toFixed(2)+'</span></div>'+
+    '<div class="tr"><span class="tl">باج ١٥٪</span><span class="tv">$'+t.toFixed(2)+'</span></div>'+
+    '<hr class="tdiv">'+
+    '<div class="tr gr"><span class="tl">کۆی کۆتایی</span><span class="tv">$'+total.toFixed(2)+'</span></div>'+
+    '</div>'+
+    '<div class="plbl">شێوازی پارەدان</div>'+
+    '<div class="prow">'+
+    '<div class="pm '+(selPay==='cash'?'sel':'')+'" onclick="setP(this,\'cash\')"><span class="pi">💵</span>نەقد</div>'+
+    '<div class="pm '+(selPay==='card'?'sel':'')+'" onclick="setP(this,\'card\')"><span class="pi">💳</span>کارت</div>'+
+    '</div>'+
+    '<button class="paybtn" onclick="checkout()">☁️ پارەستان و ناردن بۆ S3</button>'+
+    '<div style="height:8px"></div>';
+}
+
+function checkout(){
+  var items=Object.values(cart);
+  if(!items.length)return;
+  var s=sub(),t=s*.15,total=s+t;
+  var id='وەسڵ-'+(++sNo);
+  var now=new Date();
+  var ts=now.toLocaleTimeString();
+  var ds=now.toLocaleDateString();
+  var k='receipts/2026/'+id+'.json';
+  var bk='pos-receipts-krd';
+  hist.unshift({id:id,items:items.slice(),total:total,pay:selPay,ts:ts,ds:ds,k:k,bk:bk});
+  toast('PUT '+id+'.json \u2192 s3://'+bk+'/');
+  setTimeout(function(){toast('\u2713 S3 \u0626\u06d5\u067e\u0644\u06c6\u062f \u0633\u06d5\u0631\u06a9\u06d5\u0648\u062a\u0648\u0648 \u2014 '+id);},700);
+  document.getElementById('rcptEl').innerHTML=
+    '<div class="rr"><span class="rl">ناسنامەی وەسڵ</span><span class="rv">'+id+'</span></div>'+
+    '<div class="rr"><span class="rl">ژمارەی کاڵا</span><span class="rv">'+items.length+' جۆر</span></div>'+
+    '<div class="rr"><span class="rl">کۆی کۆتایی</span><span class="rv" style="color:var(--acc)">$'+total.toFixed(2)+'</span></div>'+
+    '<div class="rr"><span class="rl">پارەدان</span><span class="rv">'+(selPay==='cash'?'💵 نەقد':'💳 کارت')+'</span></div>'+
+    '<div class="rr"><span class="rl">کات</span><span class="rv" style="direction:ltr">'+ds+' '+ts+'</span></div>'+
+    '<div class="rr"><span class="rl" style="color:var(--blu)">S3 Key</span><span class="rv" style="font-size:9px;direction:ltr;font-family:monospace">'+k+'</span></div>';
+  document.getElementById('modal').classList.add('on');
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('on');
+  cart={};bu();fcu();renderProds();go('p');
+}
+
+function renderHist(){
+  if(!hist.length){
+    document.getElementById('histEl').innerHTML=
+      '<div class="httl">📋 مێژووی فرۆشتن</div>'+
+      '<div class="nhist"><div style="font-size:52px;opacity:.2;margin-bottom:12px">📋</div>'+
+      '<div style="font-size:14px;font-weight:700;margin-bottom:6px">هیچ فرۆشتنێک نییە</div>'+
+      '<div style="font-size:12px">کاڵا بفرۆشە تا لێرە دەردەکەوێت</div></div>';
+    return;
+  }
+  document.getElementById('histEl').innerHTML=
+    '<div class="httl">📋 مێژووی فرۆشتن</div>'+
+    hist.map(function(s){
+      return '<div class="hcard">'+
+        '<div class="htop"><div><div class="hid">'+s.id+'</div>'+
+        '<div class="htm">'+s.ds+' — '+s.ts+'</div></div>'+
+        '<div class="htot">$'+s.total.toFixed(2)+'</div></div>'+
+        '<div class="hits">'+s.items.map(function(i){return i.e+' '+i.n+' ×'+i.qty;}).join(' | ')+'</div>'+
+        '<div class="hs3">s3://'+s.bk+'/'+s.k+'</div></div>';
+    }).join('');
+}
+
+var _tt;
+function toast(msg){
+  var el=document.getElementById('toast');
+  el.textContent='☁ '+msg;el.classList.add('on');
+  clearTimeout(_tt);_tt=setTimeout(function(){el.classList.remove('on');},2800);
+}
+
+// ── INIT ──
+renderCats();
+renderProds();
+renderCart();
+setTimeout(function(){toast('\u2713 \u067e\u06d5\u06cc\u0648\u06d5\u0646\u062f\u06cc \u0628\u06d5\u0631\u067e\u0627 \u0628\u0648\u0648 \u2014 Amazon S3 us-east-1');},800);
+</script>
+</body>
+</html>
